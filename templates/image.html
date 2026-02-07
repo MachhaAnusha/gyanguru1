@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Diagrams - GyanGuru{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <span class="page-icon">🖼️</span>
+        Visual Diagrams
+    </h1>
+    <p class="page-description">
+        Generate AI-powered educational diagrams to visualize ML concepts
+    </p>
+</div>
+
+<div class="content-container">
+    <!-- Input Section -->
+    <div class="input-section glass-card">
+        <form id="imageForm" class="generation-form">
+            <div class="form-group">
+                <label for="topic" class="form-label">ML Topic to Visualize</label>
+                <input type="text" id="topic" name="topic" class="form-input"
+                    placeholder="e.g., CNN Architecture, LSTM Gates, Transformer Attention..." required
+                    autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Diagram Type</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="diagram_type" value="architecture" checked>
+                        <span class="radio-label">
+                            <span class="radio-title">🏗️ Architecture</span>
+                            <span class="radio-desc">System/network structure diagrams</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="diagram_type" value="flowchart">
+                        <span class="radio-label">
+                            <span class="radio-title">📊 Flowchart</span>
+                            <span class="radio-desc">Step-by-step process flows</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="diagram_type" value="concept_map">
+                        <span class="radio-label">
+                            <span class="radio-title">🕸️ Concept Map</span>
+                            <span class="radio-desc">Relationships between concepts</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="diagram_type" value="visualization">
+                        <span class="radio-label">
+                            <span class="radio-title">📈 Visualization</span>
+                            <span class="radio-desc">Data/mathematical illustrations</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-generate" id="generateBtn">
+                <span class="btn-text">Generate Diagram</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Generating...
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Output Section -->
+    <div id="outputSection" class="output-section hidden">
+        <div class="image-output-card glass-card">
+            <div class="image-header">
+                <h2 class="image-title" id="imageTitle">Generated Diagram</h2>
+                <div class="image-meta">
+                    <span class="meta-tag" id="diagramType">Architecture</span>
+                    <span class="meta-tag" id="genMethod">AI Generated</span>
+                </div>
+            </div>
+
+            <div class="image-container">
+                <img id="generatedImage" src="" alt="Generated ML Diagram" class="generated-image">
+            </div>
+
+            <div class="image-actions">
+                <a class="btn btn-secondary" id="downloadImage" href="#" download>
+                    <span>⬇️</span> Download Image
+                </a>
+                <button class="btn btn-secondary" onclick="openFullscreen()">
+                    <span>🔍</span> View Fullscreen
+                </button>
+            </div>
+        </div>
+
+        <!-- Prompt Used -->
+        <div class="prompt-preview glass-card">
+            <h3 class="card-title">🎨 Generation Prompt</h3>
+            <p id="usedPrompt" class="prompt-text"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Fullscreen Modal -->
+<div id="fullscreenModal" class="fullscreen-modal" onclick="closeFullscreen()">
+    <img id="fullscreenImage" src="" alt="Fullscreen Diagram">
+    <button class="close-btn" aria-label="Close">&times;</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('imageForm');
+        const topicInput = document.getElementById('topic');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('outputSection');
+        const imageTitle = document.getElementById('imageTitle');
+        const generatedImage = document.getElementById('generatedImage');
+        const downloadImage = document.getElementById('downloadImage');
+        const diagramType = document.getElementById('diagramType');
+        const genMethod = document.getElementById('genMethod');
+        const usedPrompt = document.getElementById('usedPrompt');
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const topic = topicInput.value.trim();
+            const type = document.querySelector('input[name="diagram_type"]:checked').value;
+
+            if (!topic) {
+                showToast('Please enter a topic', 'error');
+                return;
+            }
+
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic, diagram_type: type }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate image');
+                }
+
+                // Update image display
+                imageTitle.textContent = topic;
+                generatedImage.src = data.image_url;
+                downloadImage.href = data.image_url;
+
+                // Update meta info
+                const typeLabels = {
+                    'architecture': '🏗️ Architecture',
+                    'flowchart': '📊 Flowchart',
+                    'concept_map': '🕸️ Concept Map',
+                    'visualization': '📈 Visualization'
+                };
+                diagramType.textContent = typeLabels[data.diagram_type] || data.diagram_type;
+                genMethod.textContent = data.method === 'gemini' ? '✨ AI Generated' : '📐 Placeholder';
+
+                // Display prompt
+                usedPrompt.textContent = data.prompt;
+
+                outputSection.classList.remove('hidden');
+                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showToast('Diagram generated!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }
+        });
+    });
+
+    function openFullscreen() {
+        const modal = document.getElementById('fullscreenModal');
+        const fullscreenImg = document.getElementById('fullscreenImage');
+        const generatedImg = document.getElementById('generatedImage');
+
+        fullscreenImg.src = generatedImg.src;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeFullscreen() {
+        const modal = document.getElementById('fullscreenModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeFullscreen();
+        }
+    });
+</script>
+{% endblock %}

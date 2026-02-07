@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Text Explanations - GyanGuru{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <span class="page-icon">📝</span>
+        Text Explanations
+    </h1>
+    <p class="page-description">
+        Get comprehensive, AI-generated explanations for any Machine Learning concept
+    </p>
+</div>
+
+<div class="content-container">
+    <!-- Input Section -->
+    <div class="input-section glass-card">
+        <form id="textForm" class="generation-form">
+            <div class="form-group">
+                <label for="topic" class="form-label">ML Topic</label>
+                <input type="text" id="topic" name="topic" class="form-input"
+                    placeholder="e.g., Backpropagation, CNN, Random Forest..." required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Explanation Depth</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="depth" value="brief">
+                        <span class="radio-label">
+                            <span class="radio-title">Brief</span>
+                            <span class="radio-desc">Quick overview (2-3 paragraphs)</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="depth" value="intermediate">
+                        <span class="radio-label">
+                            <span class="radio-title">Intermediate</span>
+                            <span class="radio-desc">Balanced coverage with examples</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="depth" value="comprehensive" checked>
+                        <span class="radio-label">
+                            <span class="radio-title">Comprehensive</span>
+                            <span class="radio-desc">In-depth with math & applications</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-generate" id="generateBtn">
+                <span class="btn-text">Generate Explanation</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Generating...
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Output Section -->
+    <div id="outputSection" class="output-section hidden">
+        <div class="output-header">
+            <h2 class="output-title" id="outputTitle">Explanation</h2>
+            <div class="output-actions">
+                <button class="btn btn-icon" onclick="copyToClipboard()" title="Copy to clipboard">
+                    <span>📋</span> Copy
+                </button>
+            </div>
+        </div>
+
+        <div class="output-content glass-card" id="outputContent">
+            <!-- Markdown content will be rendered here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('textForm');
+        const topicInput = document.getElementById('topic');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('outputSection');
+        const outputTitle = document.getElementById('outputTitle');
+        const outputContent = document.getElementById('outputContent');
+
+        // Check for pre-selected topic from home page
+        const selectedTopic = sessionStorage.getItem('selectedTopic');
+        if (selectedTopic) {
+            topicInput.value = selectedTopic;
+            sessionStorage.removeItem('selectedTopic');
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const topic = topicInput.value.trim();
+            const depth = document.querySelector('input[name="depth"]:checked').value;
+
+            if (!topic) {
+                showToast('Please enter a topic', 'error');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/generate-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic, depth }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate explanation');
+                }
+
+                // Render markdown content
+                outputTitle.textContent = `${topic}`;
+                outputContent.innerHTML = marked.parse(data.content);
+
+                // Apply syntax highlighting to code blocks
+                outputContent.querySelectorAll('pre code').forEach((block) => {
+                    Prism.highlightElement(block);
+                });
+
+                outputSection.classList.remove('hidden');
+                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showToast('Explanation generated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }
+        });
+    });
+
+    function copyToClipboard() {
+        const content = document.getElementById('outputContent').innerText;
+        navigator.clipboard.writeText(content).then(() => {
+            showToast('Copied to clipboard!', 'success');
+        }).catch(err => {
+            showToast('Failed to copy', 'error');
+        });
+    }
+</script>
+{% endblock %}

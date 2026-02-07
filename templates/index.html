@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}GyanGuru - AI-Powered ML Learning Assistant{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <span class="hero-icon">🧠</span>
+            <span class="gradient-text">GyanGuru</span>
+        </h1>
+        <p class="hero-subtitle">AI-Powered Machine Learning Learning Assistant</p>
+        <p class="hero-description">
+            Master ML concepts through interactive, multi-modal learning.
+            Get instant explanations, working code, audio lessons, and visual diagrams.
+        </p>
+    </div>
+    <div class="hero-glow"></div>
+</div>
+
+<section class="features-section">
+    <h2 class="section-title">Choose Your Learning Mode</h2>
+
+    <div class="features-grid">
+        <!-- Text Explanation Card -->
+        <a href="/text" class="feature-card">
+            <div class="feature-icon-wrapper">
+                <span class="feature-icon">📝</span>
+            </div>
+            <h3 class="feature-title">Text Explanations</h3>
+            <p class="feature-description">
+                Get comprehensive, structured explanations of ML concepts with mathematical foundations and practical
+                applications.
+            </p>
+            <div class="feature-tags">
+                <span class="tag">Markdown</span>
+                <span class="tag">LaTeX</span>
+                <span class="tag">Multiple Depths</span>
+            </div>
+            <span class="feature-cta">Start Learning →</span>
+        </a>
+
+        <!-- Code Generation Card -->
+        <a href="/code" class="feature-card">
+            <div class="feature-icon-wrapper">
+                <span class="feature-icon">💻</span>
+            </div>
+            <h3 class="feature-title">Code Generation</h3>
+            <p class="feature-description">
+                Generate production-ready Python implementations with dependency detection and Colab compatibility.
+            </p>
+            <div class="feature-tags">
+                <span class="tag">Python</span>
+                <span class="tag">Auto Dependencies</span>
+                <span class="tag">Colab Ready</span>
+            </div>
+            <span class="feature-cta">Generate Code →</span>
+        </a>
+
+        <!-- Audio Learning Card -->
+        <a href="/audio" class="feature-card">
+            <div class="feature-icon-wrapper">
+                <span class="feature-icon">🎧</span>
+            </div>
+            <h3 class="feature-title">Audio Lessons</h3>
+            <p class="feature-description">
+                Create audio lessons for learning on-the-go. Perfect for commutes, workouts, or passive learning.
+            </p>
+            <div class="feature-tags">
+                <span class="tag">TTS</span>
+                <span class="tag">Downloadable</span>
+                <span class="tag">Conversational</span>
+            </div>
+            <span class="feature-cta">Listen Now →</span>
+        </a>
+
+        <!-- Image Visualization Card -->
+        <a href="/image" class="feature-card">
+            <div class="feature-icon-wrapper">
+                <span class="feature-icon">🖼️</span>
+            </div>
+            <h3 class="feature-title">Visual Diagrams</h3>
+            <p class="feature-description">
+                Generate architecture diagrams, flowcharts, and concept maps to visualize complex ML systems.
+            </p>
+            <div class="feature-tags">
+                <span class="tag">Architecture</span>
+                <span class="tag">Flowcharts</span>
+                <span class="tag">AI Generated</span>
+            </div>
+            <span class="feature-cta">Visualize →</span>
+        </a>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <h2 class="section-title">How It Works</h2>
+
+    <div class="steps-container">
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Choose a Topic</h3>
+            <p>Enter any ML concept you want to learn about</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>Select Your Mode</h3>
+            <p>Pick text, code, audio, or visual learning</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Learn & Download</h3>
+            <p>Get AI-generated content instantly</p>
+        </div>
+    </div>
+</section>
+
+<section class="topics-section">
+    <h2 class="section-title">Popular ML Topics</h2>
+
+    <div class="topics-grid">
+        <button class="topic-chip" onclick="navigateToTopic('Neural Networks')">Neural Networks</button>
+        <button class="topic-chip" onclick="navigateToTopic('Gradient Descent')">Gradient Descent</button>
+        <button class="topic-chip" onclick="navigateToTopic('CNN Architecture')">CNN Architecture</button>
+        <button class="topic-chip" onclick="navigateToTopic('LSTM Networks')">LSTM Networks</button>
+        <button class="topic-chip" onclick="navigateToTopic('Random Forest')">Random Forest</button>
+        <button class="topic-chip" onclick="navigateToTopic('K-Means Clustering')">K-Means Clustering</button>
+        <button class="topic-chip" onclick="navigateToTopic('Backpropagation')">Backpropagation</button>
+        <button class="topic-chip" onclick="navigateToTopic('Transformer Architecture')">Transformers</button>
+        <button class="topic-chip" onclick="navigateToTopic('Reinforcement Learning')">Reinforcement Learning</button>
+        <button class="topic-chip" onclick="navigateToTopic('GANs')">GANs</button>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function navigateToTopic(topic) {
+        sessionStorage.setItem('selectedTopic', topic);
+        window.location.href = '/text';
+    }
+</script>
+{% endblock %}

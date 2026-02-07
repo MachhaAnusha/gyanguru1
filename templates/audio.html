@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Audio Learning - GyanGuru{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <span class="page-icon">🎧</span>
+        Audio Learning
+    </h1>
+    <p class="page-description">
+        Generate audio lessons for on-the-go learning — perfect for commutes and passive study
+    </p>
+</div>
+
+<div class="content-container">
+    <!-- Input Section -->
+    <div class="input-section glass-card">
+        <form id="audioForm" class="generation-form">
+            <div class="form-group">
+                <label for="topic" class="form-label">ML Topic</label>
+                <input type="text" id="topic" name="topic" class="form-input"
+                    placeholder="e.g., Introduction to Neural Networks, How Gradient Descent Works..." required
+                    autocomplete="off">
+            </div>
+
+            <div class="info-box">
+                <span class="info-icon">ℹ️</span>
+                <p>Audio lessons are generated using AI to create conversational, easy-to-follow explanations. Each
+                    lesson is approximately 3-5 minutes long.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-generate" id="generateBtn">
+                <span class="btn-text">Generate Audio Lesson</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Generating...
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Output Section -->
+    <div id="outputSection" class="output-section hidden">
+        <!-- Audio Player Card -->
+        <div class="audio-player-card glass-card">
+            <div class="audio-header">
+                <h2 class="audio-title" id="audioTitle">Audio Lesson</h2>
+                <div class="audio-meta">
+                    <span id="wordCount">0 words</span>
+                    <span>•</span>
+                    <span id="duration">~0 min</span>
+                </div>
+            </div>
+
+            <div class="audio-player-wrapper">
+                <audio id="audioPlayer" controls>
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+
+            <div class="audio-actions">
+                <a class="btn btn-secondary" id="downloadAudio" href="#" download>
+                    <span>⬇️</span> Download MP3
+                </a>
+            </div>
+        </div>
+
+        <!-- Script Preview -->
+        <div class="script-preview glass-card">
+            <div class="script-header">
+                <h3 class="card-title">📜 Lesson Script</h3>
+                <button class="btn btn-icon" onclick="copyScript()" title="Copy script">
+                    <span>📋</span> Copy
+                </button>
+            </div>
+            <div id="scriptContent" class="script-content"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('audioForm');
+        const topicInput = document.getElementById('topic');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('outputSection');
+        const audioTitle = document.getElementById('audioTitle');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadAudio = document.getElementById('downloadAudio');
+        const wordCount = document.getElementById('wordCount');
+        const duration = document.getElementById('duration');
+        const scriptContent = document.getElementById('scriptContent');
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const topic = topicInput.value.trim();
+
+            if (!topic) {
+                showToast('Please enter a topic', 'error');
+                return;
+            }
+
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/generate-audio', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate audio');
+                }
+
+                // Update audio player
+                audioTitle.textContent = topic;
+                audioPlayer.src = data.audio_url;
+                downloadAudio.href = data.audio_url;
+
+                // Update meta info
+                wordCount.textContent = `${data.word_count} words`;
+                duration.textContent = `~${data.estimated_duration} min`;
+
+                // Display script
+                scriptContent.textContent = data.script;
+
+                outputSection.classList.remove('hidden');
+                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showToast('Audio lesson generated!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }
+        });
+    });
+
+    function copyScript() {
+        const script = document.getElementById('scriptContent').textContent;
+        navigator.clipboard.writeText(script).then(() => {
+            showToast('Script copied to clipboard!', 'success');
+        }).catch(err => {
+            showToast('Failed to copy', 'error');
+        });
+    }
+</script>
+{% endblock %}

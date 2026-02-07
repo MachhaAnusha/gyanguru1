@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GyanGuru - AI-Powered Machine Learning Learning Assistant">
+    <title>{% block title %}GyanGuru - ML Learning Assistant{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <span class="brand-icon">🧠</span>
+                <span class="brand-text">GyanGuru</span>
+            </a>
+            
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span class="nav-icon">🏠</span> Home
+                </a></li>
+                <li><a href="/text" class="nav-link {% if request.endpoint == 'text_page' %}active{% endif %}">
+                    <span class="nav-icon">📝</span> Text
+                </a></li>
+                <li><a href="/code" class="nav-link {% if request.endpoint == 'code_page' %}active{% endif %}">
+                    <span class="nav-icon">💻</span> Code
+                </a></li>
+                <li><a href="/audio" class="nav-link {% if request.endpoint == 'audio_page' %}active{% endif %}">
+                    <span class="nav-icon">🎧</span> Audio
+                </a></li>
+                <li><a href="/image" class="nav-link {% if request.endpoint == 'image_page' %}active{% endif %}">
+                    <span class="nav-icon">🖼️</span> Images
+                </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p class="footer-text">
+                <span class="footer-brand">🧠 GyanGuru</span> — AI-Powered ML Learning Assistant
+            </p>
+            <p class="footer-credits">
+                Powered by Google Gemini AI | Built with Flask
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

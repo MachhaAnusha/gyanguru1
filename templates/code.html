@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Code Generation - GyanGuru{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <span class="page-icon">💻</span>
+        Code Generation
+    </h1>
+    <p class="page-description">
+        Generate production-ready Python implementations with automatic dependency detection
+    </p>
+</div>
+
+<div class="content-container">
+    <!-- Input Section -->
+    <div class="input-section glass-card">
+        <form id="codeForm" class="generation-form">
+            <div class="form-group">
+                <label for="topic" class="form-label">What would you like to implement?</label>
+                <input type="text" id="topic" name="topic" class="form-input"
+                    placeholder="e.g., Linear regression from scratch, CNN for image classification..." required
+                    autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Code Complexity</label>
+                <div class="radio-group">
+                    <label class="radio-option">
+                        <input type="radio" name="complexity" value="basic">
+                        <span class="radio-label">
+                            <span class="radio-title">Basic</span>
+                            <span class="radio-desc">Simple, educational implementation</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="complexity" value="intermediate" checked>
+                        <span class="radio-label">
+                            <span class="radio-title">Intermediate</span>
+                            <span class="radio-desc">Complete with visualization</span>
+                        </span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="complexity" value="advanced">
+                        <span class="radio-label">
+                            <span class="radio-title">Advanced</span>
+                            <span class="radio-desc">Production-ready with optimizations</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-generate" id="generateBtn">
+                <span class="btn-text">Generate Code</span>
+                <span class="btn-loading">
+                    <span class="spinner"></span>
+                    Generating...
+                </span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Output Section -->
+    <div id="outputSection" class="output-section hidden">
+        <!-- Dependencies Card -->
+        <div class="dependencies-card glass-card" id="dependenciesCard">
+            <h3 class="card-title">📦 Dependencies</h3>
+            <div id="dependenciesList" class="dependencies-list"></div>
+            <div class="install-command" id="installCommand"></div>
+        </div>
+
+        <!-- Code Output -->
+        <div class="output-header">
+            <h2 class="output-title" id="outputTitle">Generated Code</h2>
+            <div class="output-actions">
+                <button class="btn btn-icon" onclick="copyCode()" title="Copy code">
+                    <span>📋</span> Copy
+                </button>
+                <a class="btn btn-icon" id="downloadBtn" href="#" download title="Download .py file">
+                    <span>⬇️</span> Download
+                </a>
+            </div>
+        </div>
+
+        <div class="code-output glass-card">
+            <pre><code class="language-python" id="codeContent"></code></pre>
+        </div>
+
+        <!-- Setup Instructions -->
+        <div class="setup-instructions glass-card">
+            <div class="tabs">
+                <button class="tab active" data-tab="colab">Google Colab</button>
+                <button class="tab" data-tab="local">Local Setup</button>
+            </div>
+            <div class="tab-content active" id="colab">
+                <pre id="colabSetup"></pre>
+            </div>
+            <div class="tab-content" id="local">
+                <div id="localSetup" class="markdown-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('codeForm');
+        const topicInput = document.getElementById('topic');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputSection = document.getElementById('outputSection');
+        const outputTitle = document.getElementById('outputTitle');
+        const codeContent = document.getElementById('codeContent');
+        const dependenciesList = document.getElementById('dependenciesList');
+        const installCommand = document.getElementById('installCommand');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const colabSetup = document.getElementById('colabSetup');
+        const localSetup = document.getElementById('localSetup');
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+            });
+        });
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const topic = topicInput.value.trim();
+            const complexity = document.querySelector('input[name="complexity"]:checked').value;
+
+            if (!topic) {
+                showToast('Please enter a topic', 'error');
+                return;
+            }
+
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/generate-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic, complexity }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate code');
+                }
+
+                // Display code
+                outputTitle.textContent = `${topic} - ${data.line_count} lines`;
+                codeContent.textContent = data.code;
+                Prism.highlightElement(codeContent);
+
+                // Display dependencies
+                if (data.dependencies.pip_packages.length > 0) {
+                    dependenciesList.innerHTML = data.dependencies.pip_packages
+                        .map(pkg => `<span class="dep-tag">${pkg}</span>`)
+                        .join('');
+                    installCommand.innerHTML = `<code>${data.dependencies.install_command}</code>`;
+                } else {
+                    dependenciesList.innerHTML = '<span class="dep-tag">Standard library only</span>';
+                    installCommand.innerHTML = '';
+                }
+
+                // Setup instructions
+                colabSetup.textContent = data.colab_setup;
+                localSetup.innerHTML = marked.parse(data.local_setup);
+
+                // Download link
+                if (data.download_url) {
+                    downloadBtn.href = data.download_url;
+                    downloadBtn.style.display = 'flex';
+                }
+
+                outputSection.classList.remove('hidden');
+                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showToast('Code generated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(error.message, 'error');
+            } finally {
+                generateBtn.classList.remove('loading');
+                generateBtn.disabled = false;
+            }
+        });
+    });
+
+    function copyCode() {
+        const code = document.getElementById('codeContent').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            showToast('Code copied to clipboard!', 'success');
+        }).catch(err => {
+            showToast('Failed to copy', 'error');
+        });
+    }
+</script>
+{% endblock %}
