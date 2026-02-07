@@ -1,6 +1,6 @@
 """
 Gemini AI Integration Module for GyanGuru
-Handles all interactions with Google's Gemini 2.0 Flash API
+Handles all interactions with Google's Gemini 1.5 Flash API
 """
 
 import os
@@ -36,7 +36,7 @@ class GeminiClient:
         ]
         
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-exp",
+            model_name="gemini-1.5-flash",
             generation_config=self.generation_config,
             safety_settings=self.safety_settings
         )
